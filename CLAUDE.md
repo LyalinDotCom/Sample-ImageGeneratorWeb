@@ -1,0 +1,1 @@
+- always create clean code, where possible seperate things into their own functions, or when it make sense create additional files to seperate very different concerns
