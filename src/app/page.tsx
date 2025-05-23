@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import ImageHistory from '@/components/ImageHistory';
+import ImagenControls, { ImagenSettings } from '@/components/ImagenControls';
 import { saveImageToHistory } from '@/utils/imageCache';
+import { buildImagenPrompt, getAspectRatioDimensions } from '@/utils/imagenPromptBuilder';
 
 export default function Home() {
   const [prompt, setPrompt] = useState('');
@@ -12,9 +14,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [imagenSettings, setImagenSettings] = useState<ImagenSettings | null>(null);
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) {
+    if (!prompt.trim() && (!imagenSettings || !imagenSettings.subject)) {
       setError('Please enter a description');
       return;
     }
@@ -35,13 +38,33 @@ export default function Home() {
       });
     }, 200);
 
+    // Build the final prompt for Imagen
+    let finalPrompt = prompt;
+    let aspectRatio = undefined;
+
     try {
+      
+      if (model === 'imagen' && imagenSettings) {
+        finalPrompt = buildImagenPrompt(prompt, imagenSettings);
+        aspectRatio = getAspectRatioDimensions(imagenSettings.aspectRatio);
+        console.log('=== IMAGEN PROMPT BUILDER ===');
+        console.log('Base prompt:', prompt);
+        console.log('Settings:', imagenSettings);
+        console.log('Built prompt:', finalPrompt);
+        console.log('Aspect ratio:', aspectRatio);
+        console.log('============================');
+      }
+
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt, model }),
+        body: JSON.stringify({ 
+          prompt: finalPrompt, 
+          model,
+          aspectRatio 
+        }),
       });
 
       const data = await response.json();
@@ -65,6 +88,11 @@ export default function Home() {
       }
     } catch (err) {
       clearInterval(progressInterval);
+      console.error('=== CLIENT ERROR ===');
+      console.error('Error:', err);
+      console.error('Model:', model);
+      console.error('Final prompt sent:', finalPrompt);
+      console.error('===================');
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
@@ -102,7 +130,7 @@ export default function Home() {
                   </select>
                   
                   <input
-                    placeholder="Describe the image you want to create"
+                    placeholder={model === 'imagen' ? "Base description (or use controls below)" : "Describe the image you want to create"}
                     className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-[#283039] focus:border-none h-14 placeholder:text-[#9cabba] p-4 text-base font-normal leading-normal"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
@@ -111,6 +139,12 @@ export default function Home() {
                   />
                 </label>
               </div>
+              
+              {model === 'imagen' && (
+                <div className="mx-auto w-full max-w-[960px]">
+                  <ImagenControls onSettingsChange={setImagenSettings} />
+                </div>
+              )}
             </div>
             
             <div className="flex px-4 py-3 justify-center">

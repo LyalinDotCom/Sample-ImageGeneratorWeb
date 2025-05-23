@@ -7,7 +7,27 @@ export interface ImageHistoryItem {
 }
 
 const HISTORY_KEY = 'imageHistory';
-const MAX_HISTORY_ITEMS = 50;
+const MAX_HISTORY_ITEMS = 20; // Reduced from 50
+const MAX_STORAGE_SIZE = 5 * 1024 * 1024; // 5MB limit for safety
+
+// Helper to estimate size of data in bytes
+const getDataSize = (data: any): number => {
+  return new Blob([JSON.stringify(data)]).size;
+};
+
+// Helper to clean up old items if storage is getting full
+const cleanupOldItems = (history: ImageHistoryItem[]): ImageHistoryItem[] => {
+  let cleaned = [...history];
+  let currentSize = getDataSize(cleaned);
+  
+  // Remove oldest items until we're under the limit
+  while (currentSize > MAX_STORAGE_SIZE && cleaned.length > 1) {
+    cleaned.pop(); // Remove oldest item
+    currentSize = getDataSize(cleaned);
+  }
+  
+  return cleaned;
+};
 
 export const saveImageToHistory = (imageUrl: string, prompt: string, model: string) => {
   try {
@@ -21,12 +41,29 @@ export const saveImageToHistory = (imageUrl: string, prompt: string, model: stri
     };
 
     // Add new item to the beginning
-    const updatedHistory = [newItem, ...history];
+    let updatedHistory = [newItem, ...history];
 
     // Keep only the latest MAX_HISTORY_ITEMS
-    const trimmedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
+    updatedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
+    
+    // Clean up if storage is getting full
+    updatedHistory = cleanupOldItems(updatedHistory);
 
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmedHistory));
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+    } catch (storageError) {
+      // If still failing, try more aggressive cleanup
+      console.warn('Storage quota exceeded, removing older items...');
+      updatedHistory = updatedHistory.slice(0, Math.floor(updatedHistory.length / 2));
+      
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory));
+      } catch (finalError) {
+        // Last resort: clear history and save only new item
+        console.error('Storage critically full, clearing history...');
+        localStorage.setItem(HISTORY_KEY, JSON.stringify([newItem]));
+      }
+    }
     
     // Trigger a custom event to notify components
     window.dispatchEvent(new CustomEvent('imageHistoryUpdated'));
@@ -34,6 +71,12 @@ export const saveImageToHistory = (imageUrl: string, prompt: string, model: stri
     return newItem;
   } catch (error) {
     console.error('Error saving to history:', error);
+    // Try to clear corrupted data
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch (e) {
+      console.error('Failed to clear corrupted history');
+    }
     return null;
   }
 };
@@ -65,5 +108,24 @@ export const clearHistory = () => {
     window.dispatchEvent(new CustomEvent('imageHistoryUpdated'));
   } catch (error) {
     console.error('Error clearing history:', error);
+  }
+};
+
+// Get storage usage info
+export const getStorageInfo = () => {
+  try {
+    const history = getImageHistory();
+    const dataSize = getDataSize(history);
+    const itemCount = history.length;
+    
+    return {
+      itemCount,
+      dataSizeBytes: dataSize,
+      dataSizeMB: (dataSize / (1024 * 1024)).toFixed(2),
+      percentUsed: ((dataSize / MAX_STORAGE_SIZE) * 100).toFixed(1)
+    };
+  } catch (error) {
+    console.error('Error getting storage info:', error);
+    return null;
   }
 };

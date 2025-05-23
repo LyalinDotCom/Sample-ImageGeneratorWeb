@@ -44,6 +44,10 @@ async function generateWithGemini(ai: GoogleGenAI, prompt: string, retryCount = 
       };
     }
   } catch (error: any) {
+    console.error('Error in generateWithGemini:');
+    console.error('Prompt used:', prompt);
+    console.error('Error details:', error);
+    
     // Check if it's a 500 error and we haven't retried yet
     if (error.status === 500 && retryCount === 0) {
       console.log('Received 500 error from Gemini API, retrying once...');
@@ -56,16 +60,28 @@ async function generateWithGemini(ai: GoogleGenAI, prompt: string, retryCount = 
   }
 }
 
-async function generateWithImagen(ai: GoogleGenAI, prompt: string, retryCount = 0): Promise<any> {
+async function generateWithImagen(ai: GoogleGenAI, prompt: string, aspectRatio?: string, retryCount = 0): Promise<any> {
   console.log('Using Imagen model for generation', retryCount > 0 ? `(retry ${retryCount})` : '');
+  console.log('Prompt:', prompt);
+  if (aspectRatio) {
+    console.log('Aspect ratio:', aspectRatio);
+  }
   
   try {
+    const config: any = {
+      numberOfImages: 1,
+    };
+    
+    // Add aspect ratio if provided
+    if (aspectRatio) {
+      console.log('Setting aspect ratio:', aspectRatio);
+      config.aspectRatio = aspectRatio;
+    }
+    
     const response = await ai.models.generateImages({
       model: 'imagen-3.0-generate-002',
       prompt: prompt,
-      config: {
-        numberOfImages: 1,
-      },
+      config,
     });
 
     if (response.generatedImages && response.generatedImages.length > 0) {
@@ -81,12 +97,17 @@ async function generateWithImagen(ai: GoogleGenAI, prompt: string, retryCount = 
     
     throw new Error('No image was generated');
   } catch (error: any) {
+    console.error('Error in generateWithImagen:');
+    console.error('Prompt used:', prompt);
+    console.error('Aspect ratio:', aspectRatio);
+    console.error('Error details:', error);
+    
     // Check if it's a 500 error and we haven't retried yet
     if (error.status === 500 && retryCount === 0) {
       console.log('Received 500 error from Imagen API, retrying once...');
       // Wait a short time before retrying
       await new Promise(resolve => setTimeout(resolve, 1000));
-      return generateWithImagen(ai, prompt, 1);
+      return generateWithImagen(ai, prompt, aspectRatio, 1);
     }
     // Re-throw the error if it's not a 500 or we've already retried
     throw error;
@@ -94,8 +115,15 @@ async function generateWithImagen(ai: GoogleGenAI, prompt: string, retryCount = 
 }
 
 export async function POST(request: NextRequest) {
+  let prompt: string | undefined;
+  let model: string | undefined;
+  let aspectRatio: any;
+  
   try {
-    const { prompt, model } = await request.json();
+    const body = await request.json();
+    prompt = body.prompt;
+    model = body.model;
+    aspectRatio = body.aspectRatio;
 
     if (!prompt) {
       return NextResponse.json(
@@ -118,7 +146,7 @@ export async function POST(request: NextRequest) {
     let result;
     
     if (model === 'imagen') {
-      result = await generateWithImagen(ai, prompt);
+      result = await generateWithImagen(ai, prompt, aspectRatio);
     } else {
       result = await generateWithGemini(ai, prompt);
     }
@@ -126,7 +154,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
 
   } catch (error: any) {
-    console.error('Error generating image:', error);
+    console.error('=== IMAGE GENERATION ERROR ===');
+    console.error('Model:', model);
+    console.error('Original prompt:', prompt);
+    if (aspectRatio) {
+      console.error('Aspect ratio:', aspectRatio);
+    }
+    console.error('Error details:', error);
+    console.error('============================');
+    
     return NextResponse.json(
       { error: error?.message || 'Failed to generate image' },
       { status: 500 }

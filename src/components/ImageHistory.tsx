@@ -5,7 +5,8 @@ import {
   ImageHistoryItem, 
   getImageHistory, 
   deleteFromHistory, 
-  clearHistory as clearHistoryUtil 
+  clearHistory as clearHistoryUtil,
+  getStorageInfo
 } from '@/utils/imageCache';
 
 export default function ImageHistory() {
@@ -52,10 +53,19 @@ export default function ImageHistory() {
     return null;
   }
 
+  const storageInfo = getStorageInfo();
+
   return (
     <>
       <div className="flex items-center justify-between px-4 pb-3 pt-5">
-        <h2 className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">History</h2>
+        <div>
+          <h2 className="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">History</h2>
+          {storageInfo && (
+            <p className="text-[#9cabba] text-xs mt-1">
+              {storageInfo.itemCount} items • {storageInfo.dataSizeMB} MB ({storageInfo.percentUsed}% of limit)
+            </p>
+          )}
+        </div>
         <button
           onClick={handleClearAll}
           className="text-[#9cabba] hover:text-white text-sm font-medium transition-colors"
