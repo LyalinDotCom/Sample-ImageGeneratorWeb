@@ -6,9 +6,12 @@ A modern web application for AI-powered image generation using Google's Imagen A
 
 ## Key Capabilities
 
-- **AI Image Generation**: Generate high-quality images using Google's Imagen 3 API
+- **AI Image Generation**: Generate high-quality images using Google's Imagen 3 or Gemini 2.0 Flash models
+- **Model Selection**: Choose between:
+  - Imagen 3.0 for high-quality image generation with aspect ratio control
+  - Gemini 2.0 Flash for multimodal generation with conversational capabilities
 - **Advanced Controls**: Fine-tune image generation with:
-  - Adjustable aspect ratios (1:1, 16:9, 9:16, 4:3, 3:4)
+  - Adjustable aspect ratios (1:1, 16:9, 9:16, 4:3, 3:4) - Imagen only
   - Safety filtering levels
   - Negative prompts to exclude unwanted elements
   - Person generation toggle
