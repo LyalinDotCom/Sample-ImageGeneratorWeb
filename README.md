@@ -67,14 +67,17 @@ GEMINI_API_KEY=your-google-ai-api-key
 ## Usage
 
 1. Enter a descriptive prompt for the image you want to generate
-2. Optionally adjust settings:
-   - Select aspect ratio
+2. Select your preferred model:
+   - **Imagen 3.0**: Best for high-quality images with aspect ratio control
+   - **Gemini 2.0 Flash**: Best for quick generation with multimodal capabilities
+3. Optionally adjust settings:
+   - Select aspect ratio (Imagen only)
    - Add negative prompts
    - Adjust safety filters
    - Toggle person generation
-3. Click "Generate" to create your image
-4. View generated images in the history panel
-5. Download or delete images as needed
+4. Click "Generate" to create your image
+5. View generated images in the history panel
+6. Download or delete images as needed
 
 ---
 
