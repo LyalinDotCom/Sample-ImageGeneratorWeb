@@ -21,8 +21,9 @@ A modern web application for AI-powered image generation using Google's Imagen A
 
 ## Models
 
-This application leverages:
-- **Imagen 3.0** (`imagen-3.0-generate-002`): Google's most advanced image generation model
+This application leverages two powerful image generation models:
+- **Imagen 3.0** (`imagen-3.0-generate-002`): Google's most advanced image generation model with support for custom aspect ratios
+- **Gemini 2.0 Flash** (`gemini-2.0-flash-preview-image-generation`): A multimodal model capable of generating both images and text, optimized for conversational image generation and editing
 - **Google AI Studio**: For API access to Google's generative AI models
 
 ## Technical Stack
