@@ -2,6 +2,8 @@
 
 A modern web application for AI-powered image generation using Google's Imagen API, built with Next.js and TypeScript.
 
+> ⚠️ **Note**: This application is a proof of concept and has not been fully tested. Some image generation options and parameter combinations may result in API errors or unexpected behavior. Please use with appropriate expectations.
+
 ## Key Capabilities
 
 - **AI Image Generation**: Generate high-quality images using Google's Imagen 3 API
@@ -21,14 +23,14 @@ A modern web application for AI-powered image generation using Google's Imagen A
 
 This application leverages:
 - **Imagen 3.0** (`imagen-3.0-generate-002`): Google's most advanced image generation model
-- **Vertex AI**: For secure API access and model deployment
+- **Google AI Studio**: For API access to Google's generative AI models
 
 ## Technical Stack
 
 - **Frontend**: Next.js 14, React, TypeScript
 - **Styling**: Tailwind CSS
 - **UI Components**: Radix UI primitives
-- **API**: Google Vertex AI SDK
+- **API**: Google GenAI SDK (`@google/genai`)
 - **Storage**: Browser LocalStorage for image history
 
 ## Setup
@@ -39,10 +41,10 @@ This application leverages:
    npm install
    ```
 
-3. Configure Google Cloud credentials:
-   - Set up a Google Cloud project with Vertex AI enabled
-   - Configure authentication (service account or application default credentials)
-   - Set your project ID in the environment
+3. Configure Google AI API key:
+   - Get an API key from [Google AI Studio](https://aistudio.google.com/apikey)
+   - Create a `.env.local` file in the project root
+   - Add your API key to the environment variables
 
 4. Run the development server:
    ```bash
@@ -55,7 +57,7 @@ This application leverages:
 
 Create a `.env.local` file with:
 ```
-GOOGLE_CLOUD_PROJECT=your-project-id
+GEMINI_API_KEY=your-google-ai-api-key
 ```
 
 ## Usage
